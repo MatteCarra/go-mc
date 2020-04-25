@@ -12,16 +12,16 @@ import (
 // Returns a JSON data with server status, and the delay.
 //
 // For more information for JSON format, see https://wiki.vg/Server_List_Ping#Response
-func PingAndList(addr string, port int) ([]byte, time.Duration, error) {
+func PingAndList(addr string, port int, protocolVersion int) ([]byte, time.Duration, error) {
 	conn, err := net.DialMC(fmt.Sprintf("%s:%d", addr, port))
 	if err != nil {
 		return nil, 0, fmt.Errorf("bot: dial fail: %v", err)
 	}
-	return pingAndList(addr, port, conn)
+	return pingAndList(addr, port, protocolVersion, conn)
 }
 
 // PingAndListTimeout PingAndLIstTimeout is the version of PingAndList with max request time.
-func PingAndListTimeout(addr string, port int, timeout time.Duration) ([]byte, time.Duration, error) {
+func PingAndListTimeout(addr string, port int, protocolVersion int, timeout time.Duration) ([]byte, time.Duration, error) {
 	deadLine := time.Now().Add(timeout)
 
 	conn, err := net.DialMCTimeout(fmt.Sprintf("%s:%d", addr, port), timeout)
@@ -34,16 +34,16 @@ func PingAndListTimeout(addr string, port int, timeout time.Duration) ([]byte, t
 		return nil, 0, fmt.Errorf("bot: set deadline fail: %v", err)
 	}
 
-	return pingAndList(addr, port, conn)
+	return pingAndList(addr, port, protocolVersion, conn)
 }
 
-func pingAndList(addr string, port int, conn *net.Conn) ([]byte, time.Duration, error) {
+func pingAndList(addr string, port int, protocolVersion int, conn *net.Conn) ([]byte, time.Duration, error) {
 	//握手
 	err := conn.WritePacket(
 		//Handshake Packet
 		pk.Marshal(
 			0x00,                       //Handshake packet ID
-			pk.VarInt(ProtocolVersion), //Protocol version
+			pk.VarInt(protocolVersion), //Protocol version
 			pk.String(addr),            //Server's address
 			pk.UnsignedShort(port),
 			pk.Byte(1),
