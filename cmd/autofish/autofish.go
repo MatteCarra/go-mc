@@ -4,6 +4,8 @@ import (
 	"log"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/Tnze/go-mc/bot"
 	"github.com/Tnze/go-mc/chat"
 	_ "github.com/Tnze/go-mc/data/lang/en-us"
@@ -72,7 +74,7 @@ func onSound(name string, category int, x, y, z float64, volume, pitch float32) 
 	return nil
 }
 
-func onChatMsg(c chat.Message, pos byte) error {
+func onChatMsg(c chat.Message, pos byte, uuid uuid.UUID) error {
 	log.Println("Chat:", c)
 	return nil
 }

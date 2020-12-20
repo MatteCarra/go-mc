@@ -2,9 +2,10 @@ package packet
 
 import (
 	"errors"
-	"github.com/google/uuid"
 	"io"
 	"math"
+
+	"github.com/google/uuid"
 
 	"github.com/Tnze/go-mc/nbt"
 )
@@ -277,10 +278,10 @@ func (v *VarInt) Decode(r DecodeReader) error {
 
 		n |= uint32(sec&0x7F) << uint32(7*i)
 
-		if sec&0x80 == 0 {
-			break
-		} else if i > 5 {
+		if i >= 5 {
 			return errors.New("VarInt is too big")
+		} else if sec&0x80 == 0 {
+			break
 		}
 	}
 
@@ -316,10 +317,10 @@ func (v *VarLong) Decode(r DecodeReader) error {
 
 		n |= uint64(sec&0x7F) << uint64(7*i)
 
-		if sec&0x80 == 0 {
+		if i >= 10 {
+			return errors.New("VarLong is too big")
+		} else if sec&0x80 == 0 {
 			break
-		} else if i > 10 {
-			return errors.New("VarInt is too big")
 		}
 	}
 
@@ -361,6 +362,16 @@ func (p *Position) Decode(r DecodeReader) error {
 	}
 
 	p.X, p.Y, p.Z = x, y, z
+	return nil
+}
+
+//Decodes an Angle
+func (b *Angle) Decode(r DecodeReader) error {
+	v, err := r.ReadByte()
+	if err != nil {
+		return err
+	}
+	*b = Angle(v)
 	return nil
 }
 

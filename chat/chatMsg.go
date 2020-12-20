@@ -25,7 +25,7 @@ type jsonChat struct {
 	Text string `json:"text,omitempty"`
 
 	Bold          bool   `json:"bold,omitempty"`          //粗体
-	Italic        bool   `json:"Italic,omitempty"`        //斜体
+	Italic        bool   `json:"italic,omitempty"`        //斜体
 	UnderLined    bool   `json:"underlined,omitempty"`    //下划线
 	StrikeThrough bool   `json:"strikethrough,omitempty"` //删除线
 	Obfuscated    bool   `json:"obfuscated,omitempty"`    //随机
@@ -33,7 +33,7 @@ type jsonChat struct {
 
 	Translate string            `json:"translate,omitempty"`
 	With      []json.RawMessage `json:"with,omitempty"` // How can go handle an JSON array with Object and String?
-	Extra     []jsonChat        `json:"extra,omitempty"`
+	Extra     []Message         `json:"extra,omitempty"`
 }
 
 //UnmarshalJSON decode json to Message
@@ -73,12 +73,12 @@ func (m *Message) Append(extraMsg ...Message) {
 	finalLen := origLen + len(extraMsg)
 	if cap(m.Extra) < len(m.Extra)+len(extraMsg) {
 		// pre expansion
-		extra := make([]jsonChat, finalLen)
+		extra := make([]Message, finalLen)
 		copy(extra, m.Extra)
 		m.Extra = extra
 	}
 	for _, v := range extraMsg {
-		m.Extra = append(m.Extra, jsonChat(v))
+		m.Extra = append(m.Extra, v)
 	}
 }
 
@@ -151,7 +151,7 @@ func SetLanguage(trans map[string]string) {
 // ClearString return the message String without escape sequence for ansi color.
 func (m Message) ClearString() string {
 	var msg strings.Builder
-	text, _ := trans(m.Text, false)
+	text, _ := TransCtrlSeq(m.Text, false)
 	msg.WriteString(text)
 
 	//handle translate
@@ -202,7 +202,7 @@ func (m Message) String() string {
 		msg.WriteString("\033[" + format.String()[:format.Len()-1] + "m")
 	}
 
-	text, ok := trans(m.Text, true)
+	text, ok := TransCtrlSeq(m.Text, true)
 	msg.WriteString(text)
 
 	//handle translate
@@ -235,7 +235,10 @@ func (m Message) String() string {
 
 var fmtPat = regexp.MustCompile("(?i)§[0-9A-FK-OR]")
 
-func trans(str string, ansi bool) (dst string, change bool) {
+// TransCtrlSeq will transform control sequences into ANSI code
+// or simply filter them. Depends on the second argument.
+// if the str contains control sequences, returned change=true.
+func TransCtrlSeq(str string, ansi bool) (dst string, change bool) {
 	dst = fmtPat.ReplaceAllStringFunc(
 		str,
 		func(str string) string {
